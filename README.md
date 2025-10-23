@@ -4,15 +4,10 @@
 This is a multi-page web application that allows students to apply for grade forgiveness through a structured form process. The system includes student access for submitting applications and admin access for reviewing and managing submissions.
 
 ## Group Members / Authors
-- **John Doe** - Lead Developer
-- **Jane Smith** - UI/UX Designer
-- **Mike Johnson** - System Administrator
-- **Sarah Wilson** - Quality Assurance
-
-## Course Information
-- **Course:** PHP Programming
-- **Institution:** Computer Science Department
-- **Date:** 2024
+- **Serena Morris** 
+- **Jahzeal Simms** 
+- **Joshane Beecher** 
+- **Abigayle ** 
 
 ## Features
 
@@ -45,34 +40,7 @@ This is a multi-page web application that allows students to apply for grade for
 - **Session Management:** PHP Sessions with security cookies
 - **Validation:** Server-side validation with double scripting protection
 
-## File Structure
-```
-MultipageGradeForgivenessForm/
-├── index.php                    # Home page with group member information
-├── login.php                    # Login form for students and admins
-├── grade_forgiveness_records.txt # Data storage file
-├── includes/
-│   └── config.php              # Configuration and helper functions
-├── forms/
-│   ├── step1.php               # Student information form
-│   ├── step2.php               # Module information form
-│   ├── step3.php               # Signatures and approval form
-│   ├── report.php              # Application report display
-│   └── post_submission.php     # Post-submission page
-├── student/
-│   ├── studentAccess.php       # Student dashboard
-│   ├── confirmID.php           # ID confirmation for editing
-│   └── delete_confirmation.php # Delete confirmation page
-├── admin/
-│   ├── simple_dashboard.php    # Admin dashboard
-│   ├── view_all_records.php    # View all applications
-│   ├── view_one_record.php     # View specific application
-│   ├── add_signature.php       # Add signatures to applications
-│   └── delete_text_files.php   # Delete data files
-└── assets/
-    ├── styles.css              # Simplified CSS styling
-    └── script.js               # Client-side validation
-```
+
 
 ## Application Workflow
 
