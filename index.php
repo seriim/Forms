@@ -20,23 +20,18 @@ require_once 'includes/config.php';
                 <li>Serena Morris - 2208659</li>
                 <li>Joshane Beecher - 2304845</li>
                 <li>Jahzeal Simms - 2202446</li>
-                <li>Abigayle </li>
+                <li>Abigayle Higgins - 2106327 </li>
             </ul>
-            <p><strong>Course:</strong> PHP Programming</p>
-            <p><strong>Institution:</strong> Computer Science Department</p>
             <p><strong>Date:</strong> <?php echo date('F Y'); ?></p>
         </div>
         
         <div class="description">
             <p>This system allows students to apply for grade forgiveness through a multi-step form process.</p>
-            <p>The application includes student information, module details, and approval signatures.</p>
-            <p><strong>Features:</strong> Multi-page form, validation, session management, file storage, login system</p>
         </div>
         
         <div class="btn-container">
             <a href="login.php" class="btn btn-primary">Login to System</a>
         </div>
-        
         <p style="text-align: center; color: #666; font-size: 14px; margin-top: 20px;">Please login to access the system features</p>
     </div>
     <script src="assets/script.js"></script>
