@@ -7,7 +7,7 @@ This is a multi-page web application that allows students to apply for grade for
 - **Serena Morris** 
 - **Jahzeal Simms** 
 - **Joshane Beecher** 
-- **Abigayle ** 
+- **Abigayle Higgins** 
 
 ## Features
 
@@ -66,14 +66,6 @@ This is a multi-page web application that allows students to apply for grade for
 - CSRF protection with session tokens
 - Secure password handling
 
-## Data Storage
-All application data is stored in `grade_forgiveness_records.txt` with the following structure:
-- Primary Key: `StudentID_RecordNumber` (e.g., 251017_6)
-- Timestamp of submission
-- Student information
-- Module details
-- Signature information
-- Application status
 
 ## Installation & Setup
 
@@ -82,8 +74,4 @@ All application data is stored in `grade_forgiveness_records.txt` with the follo
 3. Access the application at `http://localhost/MultipageGradeForgivenessForm/`
 4. Login with provided credentials
 
-## Notes
-- The system uses simple text file storage for easy portability
-- All styling is minimal and functional
-- No external dependencies required
-- Compatible with PHP 7.0+
+

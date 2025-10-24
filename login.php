@@ -215,7 +215,7 @@ if(isset($_POST['login']))
 			
 			<div style="text-align: center; margin-top: 20px;">
 				<a href="index.php" style="color: #2c5aa0; text-decoration: none; font-weight: 600; font-size: 14px;">
-					← Back to Home
+				 Back to Home
 				</a>
 			</div>
 		</div>
