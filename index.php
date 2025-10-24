@@ -20,7 +20,7 @@ require_once 'includes/config.php';
                 <li>Serena Morris - 2208659</li>
                 <li>Joshane Beecher - 2304845</li>
                 <li>Jahzeal Simms - 2202446</li>
-                <li>Abigayle Higgins - 2106327 </li>
+                <li>Abbygayle Higgins - 2106327 </li>
             </ul>
             <p><strong>Date:</strong> <?php echo date('F Y'); ?></p>
         </div>
