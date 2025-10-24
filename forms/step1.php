@@ -1,15 +1,21 @@
 <?php
 require_once '../includes/config.php';
 
-// Initialize session data if not set
-if (!isset($_SESSION['form_data'])) {
-    $_SESSION['form_data'] = array();
-}
-
-// Check if editing
-$is_editing = isset($_GET['edit']) && $_GET['edit'] == 1;
+// Check if editing (from GET or POST)
+$is_editing = (isset($_GET['edit']) && $_GET['edit'] == 1) || (isset($_POST['edit']) && $_POST['edit'] == 1);
 $edit_student_id = $_SESSION['edit_student_id'] ?? '';
 $existing_data = array();
+
+// Clear session data if creating a new form (not editing)
+if (!$is_editing) {
+    $_SESSION['form_data'] = array();
+    unset($_SESSION['edit_student_id']);
+} else {
+    // Initialize session data if not set
+    if (!isset($_SESSION['form_data'])) {
+        $_SESSION['form_data'] = array();
+    }
+}
 
 if ($is_editing && !empty($edit_student_id)) {
     $filename = DATA_FILE;
@@ -25,30 +31,36 @@ if ($is_editing && !empty($edit_student_id)) {
             }
             
             if ($in_target_app) {
-                if (strpos($trimmed, 'Student Name:') === 0) {
-                    $existing_data['student_name'] = trim(substr($trimmed, 13));
-                } elseif (strpos($trimmed, 'Student Id:') === 0) {
-                    $existing_data['student_id'] = trim(substr($trimmed, 11));
-                } elseif (strpos($trimmed, 'Course Of Study:') === 0) {
-                    $existing_data['course_of_study'] = trim(substr($trimmed, 16));
-                } elseif (strpos($trimmed, 'Course Code:') === 0) {
-                    $existing_data['course_code'] = trim(substr($trimmed, 12));
-                } elseif (strpos($trimmed, 'Major:') === 0) {
-                    $existing_data['major'] = trim(substr($trimmed, 6));
-                } elseif (strpos($trimmed, 'Minor:') === 0) {
-                    $existing_data['minor'] = trim(substr($trimmed, 6));
-                } elseif (strpos($trimmed, 'Email:') === 0) {
-                    $existing_data['email'] = trim(substr($trimmed, 6));
-                } elseif (strpos($trimmed, 'Phone:') === 0) {
-                    $existing_data['phone'] = trim(substr($trimmed, 6));
-                } elseif (strpos($trimmed, 'Academic Year:') === 0) {
-                    $existing_data['academic_year'] = trim(substr($trimmed, 14));
-                } elseif (strpos($trimmed, 'Semester:') === 0) {
-                    $existing_data['semester'] = trim(substr($trimmed, 9));
-                } elseif (strpos($trimmed, 'Campus:') === 0) {
-                    $existing_data['campus'] = trim(substr($trimmed, 7));
-                } elseif (strpos($lines[$i], 'STUDENT INFORMATION:') === false && strpos($lines[$i], 'MODULE INFORMATION:') !== false) {
+                $colon_pos = strpos($trimmed, ':');
+                if ($colon_pos !== false) {
+                    $key = substr($trimmed, 0, $colon_pos);
+                    $value = trim(substr($trimmed, $colon_pos + 1));
+                    
+                    if ($key === 'Student Name') {
+                        $existing_data['student_name'] = $value;
+                    } elseif ($key === 'Student Id') {
+                        $existing_data['student_id'] = $value;
+                    } elseif ($key === 'Course Of Study') {
+                        $existing_data['course_of_study'] = $value;
+                    } elseif ($key === 'Course Code') {
+                        $existing_data['course_code'] = $value;
+                    } elseif ($key === 'Major') {
+                        $existing_data['major'] = $value;
+                    } elseif ($key === 'Minor') {
+                        $existing_data['minor'] = $value;
+                    } elseif ($key === 'Email') {
+                        $existing_data['email'] = $value;
+                    } elseif ($key === 'Phone') {
+                        $existing_data['phone'] = $value;
+                    } elseif ($key === 'Academic Year') {
+                        $existing_data['academic_year'] = $value;
+                    } elseif ($key === 'Semester') {
+                        $existing_data['semester'] = $value;
+                    } elseif ($key === 'Campus') {
+                        $existing_data['campus'] = $value;
+                } elseif (strpos($lines[$i], 'MODULE INFORMATION:') !== false) {
                     break;
+                }
                 }
             }
         }

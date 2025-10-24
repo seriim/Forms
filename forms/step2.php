@@ -1,18 +1,70 @@
 <?php
 require_once '../includes/config.php';
 
-// Check if user came from step 1
-if (!isset($_SESSION['form_data']['student_info'])) {
+// Check if editing mode (from GET or POST)
+$is_editing = (isset($_GET['edit']) && $_GET['edit'] == 1) || (isset($_POST['edit']) && $_POST['edit'] == 1);
+
+// Check if user came from step 1 (allow if editing)
+if (!isset($_SESSION['form_data']['student_info']) && !$is_editing) {
     header('Location: step1.php');
     exit();
 }
 
-// Get current semester from step 1
+// Load student info from file if editing and session is empty
+if ($is_editing && !empty($_SESSION['edit_student_id']) && empty($_SESSION['form_data']['student_info'])) {
+    $filename = DATA_FILE;
+    if (file_exists($filename)) {
+        $content = file_get_contents($filename);
+        $lines = explode("\n", $content);
+        $in_target_app = false;
+        $student_info = array();
+        
+        for ($i = 0; $i < count($lines); $i++) {
+            $trimmed = trim($lines[$i]);
+            if (strpos($trimmed, 'Student Id: ' . $_SESSION['edit_student_id']) !== false) {
+                $in_target_app = true;
+            }
+            
+            if ($in_target_app) {
+                if (strpos($trimmed, 'Student Name:') === 0) {
+                    $student_info['student_name'] = trim(substr($trimmed, 13));
+                } elseif (strpos($trimmed, 'Student Id:') === 0) {
+                    $student_info['student_id'] = trim(substr($trimmed, 11));
+                } elseif (strpos($trimmed, 'Course Of Study:') === 0) {
+                    $student_info['course_of_study'] = trim(substr($trimmed, 16));
+                } elseif (strpos($trimmed, 'Course Code:') === 0) {
+                    $student_info['course_code'] = trim(substr($trimmed, 12));
+                } elseif (strpos($trimmed, 'Major:') === 0) {
+                    $student_info['major'] = trim(substr($trimmed, 6));
+                } elseif (strpos($trimmed, 'Minor:') === 0) {
+                    $student_info['minor'] = trim(substr($trimmed, 6));
+                } elseif (strpos($trimmed, 'Email:') === 0) {
+                    $student_info['email'] = trim(substr($trimmed, 6));
+                } elseif (strpos($trimmed, 'Phone:') === 0) {
+                    $student_info['phone'] = trim(substr($trimmed, 6));
+                } elseif (strpos($trimmed, 'Academic Year:') === 0) {
+                    $student_info['academic_year'] = trim(substr($trimmed, 14));
+                } elseif (strpos($trimmed, 'Semester:') === 0) {
+                    $student_info['semester'] = trim(substr($trimmed, 9));
+                } elseif (strpos($trimmed, 'Campus:') === 0) {
+                    $student_info['campus'] = trim(substr($trimmed, 7));
+                } elseif (strpos($lines[$i], 'MODULE INFORMATION:') !== false) {
+                    break;
+                }
+            }
+        }
+        
+        if (!empty($student_info)) {
+            $_SESSION['form_data']['student_info'] = $student_info;
+        }
+    }
+}
+
+// Get current semester from step 1 (or from loaded data if editing)
 $current_academic_year = $_SESSION['form_data']['student_info']['academic_year'] ?? '';
 $current_semester = $_SESSION['form_data']['student_info']['semester'] ?? '';
 
-// Check if editing and load existing modules
-$is_editing = isset($_GET['edit']) && $_GET['edit'] == 1;
+// Load existing modules if editing
 $existing_modules = array();
 
 if ($is_editing && !empty($_SESSION['edit_student_id'])) {
@@ -45,25 +97,40 @@ if ($is_editing && !empty($_SESSION['edit_student_id'])) {
                     }
                     
                     $trimmed_line = trim($lines[$i]);
+                    $colon_pos = strpos($trimmed_line, ':');
                     
-                    if (strpos($trimmed_line, 'Module Name:') === 0) {
-                        if (!empty($current_module)) {
-                            $existing_modules[] = $current_module;
+                    if ($colon_pos !== false) {
+                        $key = substr($trimmed_line, 0, $colon_pos);
+                        $value = trim(substr($trimmed_line, $colon_pos + 1));
+                        
+                        if ($key === 'Module Name') {
+                            if (!empty($current_module)) {
+                                $existing_modules[] = $current_module;
+                            }
+                            $current_module = array('module_name' => $value);
+                        } elseif ($key === 'Module Code') {
+                            $current_module['module_code'] = $value;
+                        } elseif ($key === 'Academic Year') {
+                            $current_module['academic_year'] = $value;
+                        } elseif ($key === 'Academic Session') {
+                            $current_module['academic_session'] = $value;
+                        } elseif ($key === 'Initial Grade') {
+                            $current_module['initial_grade'] = $value;
                         }
-                        $current_module = array(
-                            'module_name' => trim(substr($trimmed_line, 12))
-                        );
-                    } elseif (strpos($trimmed_line, 'Module Code:') === 0) {
-                        $current_module['module_code'] = trim(substr($trimmed_line, 12));
-                    } elseif (strpos($trimmed_line, 'Academic Year:') === 0) {
-                        $current_module['academic_year'] = trim(substr($trimmed_line, 14));
-                    } elseif (strpos($trimmed_line, 'Academic Session:') === 0) {
-                        $current_module['academic_session'] = trim(substr($trimmed_line, 16));
-                    } elseif (strpos($trimmed_line, 'Initial Grade:') === 0) {
-                        $current_module['initial_grade'] = trim(substr($trimmed_line, 14));
+                    }
+                    
+                    // If we hit an empty line after having module data, save it
+                    if (empty($trimmed_line) && !empty($current_module)) {
+                        $existing_modules[] = $current_module;
+                        $current_module = array();
                     }
                 }
             }
+        }
+        
+        // Make sure to add the last module if it exists
+        if (!empty($current_module)) {
+            $existing_modules[] = $current_module;
         }
     }
     
@@ -203,18 +270,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <tr>
                             <td>
                                 <input type="text" name="module_name[]" 
-                                       value="<?php echo isset($_POST['module_name'][$i]) ? htmlspecialchars($_POST['module_name'][$i]) : (isset($existing_modules[$i]['module_name']) ? htmlspecialchars($existing_modules[$i]['module_name']) : ''); ?>"
+                                       value="<?php echo isset($_POST['module_name'][$i]) ? htmlspecialchars($_POST['module_name'][$i]) : (isset($existing_modules[$i]['module_name']) ? htmlspecialchars($existing_modules[$i]['module_name']) : (isset($_SESSION['form_data']['modules'][$i]['module_name']) ? htmlspecialchars($_SESSION['form_data']['modules'][$i]['module_name']) : '')); ?>"
                                        placeholder="Enter module name">
                             </td>
                             <td>
                                 <input type="text" name="module_code[]" 
-                                       value="<?php echo isset($_POST['module_code'][$i]) ? htmlspecialchars($_POST['module_code'][$i]) : (isset($existing_modules[$i]['module_code']) ? htmlspecialchars($existing_modules[$i]['module_code']) : ''); ?>"
+                                       value="<?php echo isset($_POST['module_code'][$i]) ? htmlspecialchars($_POST['module_code'][$i]) : (isset($existing_modules[$i]['module_code']) ? htmlspecialchars($existing_modules[$i]['module_code']) : (isset($_SESSION['form_data']['modules'][$i]['module_code']) ? htmlspecialchars($_SESSION['form_data']['modules'][$i]['module_code']) : '')); ?>"
                                        placeholder="e.g., CS101">
                             </td>
                             <td>
                                 <select name="academic_year[]">
                                     <option value="">Select Year</option>
-                                    <option value="2022-2023" <?php $yr = isset($_POST['academic_year'][$i]) ? $_POST['academic_year'][$i] : (isset($existing_modules[$i]['academic_year']) ? $existing_modules[$i]['academic_year'] : ''); echo ($yr == '2022-2023') ? 'selected' : ''; ?>>2022-2023</option>
+                                    <option value="2022-2023" <?php $yr = isset($_POST['academic_year'][$i]) ? $_POST['academic_year'][$i] : (isset($existing_modules[$i]['academic_year']) ? $existing_modules[$i]['academic_year'] : (isset($_SESSION['form_data']['modules'][$i]['academic_year']) ? $_SESSION['form_data']['modules'][$i]['academic_year'] : '')); echo ($yr == '2022-2023') ? 'selected' : ''; ?>>2022-2023</option>
                                     <option value="2023-2024" <?php echo ($yr == '2023-2024') ? 'selected' : ''; ?>>2023-2024</option>
                                     <option value="2024-2025" <?php echo ($yr == '2024-2025') ? 'selected' : ''; ?>>2024-2025</option>
                                 </select>
@@ -222,7 +289,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <td>
                                 <select name="academic_session[]">
                                     <option value="">Select Session</option>
-                                    <option value="Fall" <?php $sess = isset($_POST['academic_session'][$i]) ? $_POST['academic_session'][$i] : (isset($existing_modules[$i]['academic_session']) ? $existing_modules[$i]['academic_session'] : ''); echo ($sess == 'Fall') ? 'selected' : ''; ?>>Fall</option>
+                                    <option value="Fall" <?php $sess = isset($_POST['academic_session'][$i]) ? $_POST['academic_session'][$i] : (isset($existing_modules[$i]['academic_session']) ? $existing_modules[$i]['academic_session'] : (isset($_SESSION['form_data']['modules'][$i]['academic_session']) ? $_SESSION['form_data']['modules'][$i]['academic_session'] : '')); echo ($sess == 'Fall') ? 'selected' : ''; ?>>Fall</option>
                                     <option value="Spring" <?php echo ($sess == 'Spring') ? 'selected' : ''; ?>>Spring</option>
                                     <option value="Summer" <?php echo ($sess == 'Summer') ? 'selected' : ''; ?>>Summer</option>
                                 </select>
@@ -230,7 +297,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <td>
                                 <select name="initial_grade[]">
                                     <option value="">Select Grade</option>
-                                    <option value="F" <?php $gr = isset($_POST['initial_grade'][$i]) ? $_POST['initial_grade'][$i] : (isset($existing_modules[$i]['initial_grade']) ? $existing_modules[$i]['initial_grade'] : ''); echo ($gr == 'F') ? 'selected' : ''; ?>>F</option>
+                                    <option value="F" <?php $gr = isset($_POST['initial_grade'][$i]) ? $_POST['initial_grade'][$i] : (isset($existing_modules[$i]['initial_grade']) ? $existing_modules[$i]['initial_grade'] : (isset($_SESSION['form_data']['modules'][$i]['initial_grade']) ? $_SESSION['form_data']['modules'][$i]['initial_grade'] : '')); echo ($gr == 'F') ? 'selected' : ''; ?>>F</option>
                                     <option value="D" <?php echo ($gr == 'D') ? 'selected' : ''; ?>>D</option>
                                     <option value="D+" <?php echo ($gr == 'D+') ? 'selected' : ''; ?>>D+</option>
                                     <option value="C-" <?php echo ($gr == 'C-') ? 'selected' : ''; ?>>C-</option>

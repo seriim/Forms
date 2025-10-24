@@ -18,6 +18,9 @@ function get_all_apps() {
     foreach ($parts as $part) {
         if (empty(trim($part))) continue;
         
+        // Only include complete applications (those with END OF APPLICATION marker)
+        if (strpos($part, 'END OF APPLICATION') === false) continue;
+        
         $app = array();
         $lines = explode("\n", $part);
         

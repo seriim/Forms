@@ -20,7 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $filename = DATA_FILE;
             if (file_exists($filename)) {
                 $content = file_get_contents($filename);
-                if (strpos($content, 'Student Id: ' . $student_id) !== false) {
+                // Check if student ID exists and is part of a complete application
+                if (strpos($content, 'Student Id: ' . $student_id) !== false && strpos($content, 'END OF APPLICATION') !== false) {
                     $found = true;
                     $_SESSION['delete_student_id'] = $student_id;
                 } else {
@@ -39,21 +40,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $content = file_get_contents($filename);
                 $lines = explode("\n", $content);
                 $new_lines = array();
-                $in_target_app = false;
-                $skip_until_end = false;
+                $skip_lines = false;
+                $found_student = false;
                 
                 for ($i = 0; $i < count($lines); $i++) {
-                    if (strpos($lines[$i], 'Student Id: ' . $student_id) !== false) {
-                        $in_target_app = true;
-                        $skip_until_end = true;
+                    // Look for the application header before the student ID
+                    if (strpos($lines[$i], '=== GRADE FORGIVENESS APPLICATION ===') !== false) {
+                        // Check if the next few lines contain our student ID
+                        $found_student = false;
+                        for ($j = $i; $j < min($i + 10, count($lines)); $j++) {
+                            if (strpos($lines[$j], 'Student Id: ' . $student_id) !== false) {
+                                $found_student = true;
+                                break;
+                            }
+                        }
+                        
+                        if ($found_student) {
+                            $skip_lines = true;
+                        }
                     }
                     
-                    if ($skip_until_end) {
+                    if ($skip_lines) {
+                        // Skip until we find the end marker
                         if (strpos($lines[$i], 'END OF APPLICATION') !== false) {
-                            $skip_until_end = false;
-                            $in_target_app = false;
-                            $i++;
-                            if ($i < count($lines) && strpos($lines[$i], '============================================================') !== false) {
+                            $skip_lines = false;
+                            // Also skip the separator line after END OF APPLICATION
+                            if ($i + 1 < count($lines) && strpos($lines[$i + 1], '============================================================') !== false) {
+                                $i++;
+                            }
+                            // Skip any blank lines after
+                            if ($i + 1 < count($lines) && trim($lines[$i + 1]) === '') {
                                 $i++;
                             }
                             continue;

@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['student_id'])) {
             // Get the most recent application for this student
             $application = end($found_applications);
         } else {
-            $error_message = 'No application found for student ID: ' . htmlspecialchars($student_id);
+            $error_message = 'No complete application found for student ID: ' . htmlspecialchars($student_id);
         }
     }
 }
@@ -49,16 +49,18 @@ function get_all_applications() {
     
     $current_app = null;
     $in_app = false;
+    $is_complete = false;
     
     while (($line = fgets($file)) !== false) {
         $line = rtrim($line);
         
         if (strpos($line, '=== GRADE FORGIVENESS APPLICATION ===') !== false) {
-            if ($current_app !== null) {
+            if ($current_app !== null && $is_complete) {
                 $applications[] = $current_app;
             }
             $current_app = array();
             $in_app = true;
+            $is_complete = false;
         } elseif ($in_app && $current_app !== null) {
             if (strpos($line, 'Student Id:') === 0) {
                 $current_app['student_id'] = trim(substr($line, 11));
@@ -85,13 +87,14 @@ function get_all_applications() {
                     $current_app['modules'] = array();
                 }
                 $current_app['modules'][] = trim(substr($line, 12));
-            } elseif (strpos($line, '=== END APPLICATION ===') !== false) {
+            } elseif (strpos($line, 'END OF APPLICATION') !== false) {
+                $is_complete = true;
                 $in_app = false;
             }
         }
     }
     
-    if ($current_app !== null) {
+    if ($current_app !== null && $is_complete) {
         $applications[] = $current_app;
     }
     
